@@ -1,9 +1,13 @@
-import config from './config.json' assert {type: 'json'}
+import config from './config.js'
+import nodeMailer from 'nodemailer'
+import * as dotenv from 'dotenv'
 
 console.log('Подготовка...')
 
+dotenv.config()
 const log = []
 let sendedCount = 0
+const {HOST, PORT, USER, PASS, FROM} = process.env
 
 function start() {
   const {subject, text, recipients} = config
@@ -20,7 +24,7 @@ function start() {
   }
 
   distribute(masResult)
-  send(masResult, text)
+  send(masResult, text, subject)
 }
 
 // Парсит строку с участниками
@@ -76,7 +80,7 @@ function distribute(masResult) {
 }
 
 // Рассылает сообщения участникам
-function send(masResult, text) {
+function send(masResult, text, subject) {
   for (let i = 0; i < masResult.length; i++) {
     Promise.resolve().then(() => {
       const from = masResult[i]
@@ -88,7 +92,7 @@ function send(masResult, text) {
       }
 
       const textSend = text.replace('#fio', to.fio + ' ' + to.email)
-      // OutlookActiveXObject = MailSend(from.email, subject, textSend, OutlookActiveXObject);
+      sendMail(from.email, subject, textSend)
       finish(masResult, from, to)
     })
   }
@@ -98,8 +102,27 @@ function send(masResult, text) {
 function finish(masResult, from, to) {
   sendedCount++
   console.log(`Отправлено ${sendedCount} / ${masResult.length}`)
-  log.push(`${from?.fio} ${from?.email} дарит ${to?.fio} ${to?.email}`)
+  log.push(`${from?.fio} <${from?.email}> дарит ${to?.fio} <${to?.email}>`)
   sendedCount === masResult.length && console.log(`Отправка завершена\n${log.join('\n')}`)
+}
+
+const sendMail = async function (to, subject, html) {
+  const transporter = nodeMailer.createTransport({
+    host: HOST,
+    port: PORT,
+    secure: false,
+    auth: {
+      user: USER,
+      pass: PASS,
+    },
+  })
+
+  const info = await transporter.sendMail({
+    from: FROM,
+    to,
+    subject,
+    html,
+  })
 }
 
 //Рандом, от Min до Max включительно. Если Max не указан, то Min = Max
