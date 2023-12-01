@@ -1,0 +1,13 @@
+{
+  "name": "secret-santa",
+  "version": "0.1.0",
+  "author": "Pavel Kushkov <spawnmetal666@gmail.com>",
+  "scripts": {
+    "start": "node ./script"
+  },
+  "type": "module",
+  "dependencies": {},
+  "devDependencies": {
+    "eslint": "^8.50.0"
+  }
+}
